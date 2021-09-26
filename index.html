@@ -1,0 +1,319 @@
+
+<html >
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.18/css/jquery.dataTables.css"/>
+<script type="text/javascript" src="https://cdn.datatables.net/1.10.18/js/jquery.dataTables.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-gtEjrD/SeCtmISkJkNUaaKMoLD0//ElJ19smozuHV6z3Iehds+3Ulb9Bn9Plx0x4"
+        crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"
+        integrity="sha384-IQsoLXl5PILFhosVNubq5LC7Qb9DXgDA9i+tQ8Zj3iwWAwPtgFTxbJ8NT4GN1R8p"
+        crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/js/bootstrap.min.js"
+        integrity="sha384-Atwg2Pkwv9vp0ygtn1JAojH0nYbwNJLPhwyoVbhoPwBhjQPR5VtM2+xf0Uwh9KtT"
+        crossorigin="anonymous"></script>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/css/bootstrap.min.css" rel="stylesheet"
+      integrity="sha384-+0n0xVW2eSR5OomGNYDnhzAbDsOXxcvSN1TPprVMTNDbiYZCxYbOOl7+AMvyTG2x" crossorigin="anonymous">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script type="text/javascript">
+        var size = 0; //Lay Size tu List
+        $(document).ready(function () {
+            let sizeList = {size: 0};
+
+            // let laySize = {}
+            // laySize.size = 0;
+            let createSuccess = {
+                message: "create_success!"
+            }
+            let updateSuccess = {
+                message: "update_success!"
+            }
+            var dynamicURL = '';
+            var methodName = '';
+            listSmartPhone();
+            pageSmartPhone();
+            // getSize()
+            // console.log('goi ham list', listSmartPhone(sizeListSmartPhone))
+
+            let smartPhone = {};
+            // CREATE SMART PHONE
+            $('#create').click(function () {
+                smartPhone.producer = $('#producer').val();
+                smartPhone.model = $('#model').val();
+                smartPhone.price = $('#price').val();
+                console.log('price -->',smartPhone.price)
+                if(smartPhone.producer===''){
+                    document.getElementById('sp_producer').innerText = 'The producer is required!'
+                    return
+                } else if(smartPhone.producer.length <3 || smartPhone.producer.length >6){
+                    document.getElementById('sp_producer').innerText = 'The producer must at least 3 character or must be less than 6 character';
+                    return;
+                } else {
+                    document.getElementById('sp_producer').innerText = ''
+                }
+                if(smartPhone.model===''){
+                    document.getElementById('sp_model').innerText = 'The model is required!'
+                    return
+                } else {
+                    document.getElementById('sp_model').innerText = ''
+                }
+                if(smartPhone.price ===''){
+                    document.getElementById('sp_price').innerText = 'The price is required'
+                    return
+                } else if(smartPhone.price>100){
+                    document.getElementById('sp_price').innerText = 'The price muss less than 100'
+                    return
+                }
+                else {
+                    document.getElementById('sp_price').innerText = ''
+                }
+                let id = $('#id').val();
+                if(id){
+                    // document.getElementById('create').innerHTML = "CREATE";
+                    //update it
+                    dynamicURL = "http://localhost:8080/phone/" + id;
+                    methodName = "PUT";
+                } else {
+                    // document.getElementById('create').innerHTML = "CREATE";
+                    //save it
+                    dynamicURL = "http://localhost:8080/phone";
+                    methodName = "POST";
+                }
+                let smartPhoneObj = JSON.stringify(smartPhone);
+                console.log('OBJ ', smartPhoneObj)
+                $.ajax({
+                    url: dynamicURL,
+                    method: methodName,
+                    contentType: 'application/json; charset=utf-8',
+                    data: smartPhoneObj,
+                    success: function (data) {
+                        console.log('data', data)
+                        // alert('create success')
+                        if(JSON.stringify(data)==JSON.stringify(createSuccess)){
+                            document.getElementById('sp_success').innerHTML = 'Create Smart Phone Success!'
+
+                        }
+                        if(JSON.stringify(data)==JSON.stringify(updateSuccess)){
+                            document.getElementById('sp_success').innerHTML = 'Upadate Smart Phone Success!'
+                            document.getElementById('create').innerHTML = 'Create';
+                        }
+                        listSmartPhone();
+                        pageSmartPhone();
+                        resetFormCreate();
+                    }
+                })
+            })
+
+
+
+
+
+            function resetFormCreate(){
+                $('#producer').val('');
+                $('#model').val('');
+                $('#price').val('');
+                $('#id').val('');
+            }
+        })
+        // LIST SMART PHONE
+
+        function listSmartPhone() {
+            // laySize.size = 0;
+            $.ajax({
+                async: false, //do lệnh gọi Ajax là bất đồng bộ nên để async: false sẽ chuyển được thành đồng bộ//
+                url: "http://localhost:8080/phone",
+                method: "GET",
+                dataType: "json",
+                success: function (data) {
+                    console.log('data list = ', data.length)
+                    size = data.length;
+                },
+                error: function (error) {
+                    alert(error);
+                }
+            })
+        }
+        //PAGINATION
+        function pageSmartPhone() {
+            $(function () {
+                var container = $('#demo');
+                container.pagination({
+                    dataSource: 'http://localhost:8080/phone',
+                    locator: 'items',
+                    totalNumber: size,
+                    pageSize: 5,
+                    callback: function (response, pagination) {
+                        console.log('this.datasource -->', this.dataSource)
+                        let dataHtml = '<table border="1" class="table">';
+                        let pageStart = (pagination.pageNumber - 1) * pagination.pageSize;
+                        let pageEnd = pageStart + pagination.pageSize;
+                        let pageItems = response.slice(pageStart, pageEnd);
+                        $.each(pageItems, function (index, item) {
+                            // console.log('dataSource ==',dataHtml)
+                            // console.log('item = ', item)
+                            dataHtml +=
+                                '<tr class="table-primary">' +
+                                '<th>Producer</th>' +
+                                '<th>Model</th>' +
+                                '<th>Price</th>' +
+                                // '<th>Image</th>' +
+                                '<th>Edit</th>' +
+                                '<th>Delete</th>'
+                                + '</tr>'
+                                + '<tr>'
+                                + '<td>' + '<p>' + item.producer + '</p>' + '</td>'
+                                + '<td>' + '<p>' + item.model + '</p>' + '</td>'
+                                + '<td>' + '<p>' + item.price + '</p>' + '</td>'
+                                // + '<td>' + '<img ' + 'class =' + "show_image " + 'src=' + item.image + '>' + '</td>'
+                                + '<td><button class="btn btn-primary" onclick = "update(' + item.id + ')">Update</button> </td>'
+                                + '<td><button class="btn btn-danger" onclick = "deleteSmartPhone(' + item.id + ')">Delete</button> </td>'
+                                + '</tr>';
+
+                        });
+                        dataHtml += '</table>';
+                        container.prev().html(dataHtml);
+                    }
+                })
+            })
+        }
+        //LƯU Ý : HÀM UPDATE vs DELETE phải đặt ngoài $(document).ready thì mới gọi xuống được
+        //DELETE
+        function deleteSmartPhone(id) {
+            $.ajax({
+                url: 'http://localhost:8080/phone/' + id,
+                method: 'DELETE',
+                success: function () {
+                    alert('Delete success!');
+                    pageSmartPhone();
+                },
+                error: function (error) {
+                    alert(error);
+                }
+            })
+        }
+        //EDIT
+        function update(id) {
+            document.getElementById('create').innerHTML = "EDIT";
+            $.ajax({
+                url: 'http://localhost:8080/phone/' + id,
+                method: 'GET',
+                dataType: 'json',
+                success: function (data) {
+                    $('#producer').val(data.producer);
+                    $('#model').val(data.model);
+                    $('#price').val(data.price);
+                    $('#id').val(data.id);
+                    pageSmartPhone();
+                },
+                error: function (error) {
+                    alert(error);
+                }
+            })
+        }
+        //SEARCH
+        function searchPhone() {
+            let search = document.getElementById("search").value;
+            if(search === ''){
+                pageSmartPhone();
+                return;
+            }
+            $(function () {
+                var container = $('#demo');
+                container.pagination({
+                    dataSource: `http://localhost:8080/phone/search/${search}`,
+                    locator: 'items',
+                    totalNumber: size,
+                    pageSize: 5,
+                    callback: function (response, pagination) {
+                        console.log('this.datasource -->', this.dataSource)
+                        var dataHtml = '<table border="1" class="table">';
+                        var pageStart = (pagination.pageNumber - 1) * pagination.pageSize;
+                        var pageEnd = pageStart + pagination.pageSize;
+                        var pageItems = response.slice(pageStart, pageEnd);
+                        $.each(pageItems, function (index, item) {
+                            // console.log('dataSource ==',dataHtml)
+                            // console.log('item = ', item)
+                            dataHtml +=
+                                '<tr class="table-primary">' +
+                                '<th>Producer</th>' +
+                                '<th>Model</th>' +
+                                '<th>Price</th>' +
+                                // '<th>Image</th>' +
+                                '<th>Edit</th>' +
+                                '<th>Delete</th>'
+                                + '</tr>'
+                                + '<tr>'
+                                + '<td>' + '<p>' + item.producer + '</p>' + '</td>'
+                                + '<td>' + '<p>' + item.model + '</p>' + '</td>'
+                                + '<td>' + '<p>' + item.price + '</p>' + '</td>'
+                                // + '<td>' + '<img ' + 'class =' + "show_image " + 'src=' + item.image + '>' + '</td>'
+                                + '<td><button class="btn btn-primary" onclick = "update(' + item.id + ')">Update</button> </td>'
+                                + '<td><button class="btn btn-danger" onclick = "deleteBook(' + item.id + ')">Delete</button> </td>'
+                                + '</tr>';
+
+                        });
+                        dataHtml += '</table>';
+                        container.prev().html(dataHtml);
+                    }
+                })
+            })
+        }
+
+    </script>
+</head>
+
+<body>
+<div class="container">
+    <div class="row">
+        <div class="input-group mb-3">
+            <span class="input-group-text" id="basic-addon1">Search</span>
+            <input oninput="searchPhone()" type="text" id="search" class="form-control" placeholder="Search"
+                   aria-label="Username" aria-describedby="basic-addon1">
+<!--            <input type="button" value="Search" id="search">-->
+        </div>
+        <div class="col-12" style="margin-top: 20px; width: 350px">
+            <h1 style="color: blue;font-size: 15px">Form Create Smart Phone</h1><br>
+            <span style="color: red; font-size: 15px" id="sp_success" class="alert alert-primary"></span><br><br>
+            <span style="color:red;" id="sp_producer"></span>
+            <input id="id" type="hidden" class="form-control">
+            <div class="input-group mb-3">
+                <div class="input-group-prepend">
+                    <span class="input-group-text">Producer</span>
+                </div>
+                <input id="producer" type="text" class="form-control" placeholder="Producer">
+            </div>
+            <span style="color:red;" id="sp_model"></span>
+            <div class="input-group mb-3">
+                <div class="input-group-prepend">
+                    <span class="input-group-text">Model</span>
+                </div>
+                <input id="model" type="text" class="form-control" placeholder="Model">
+            </div>
+            <span style="color:red;" id="sp_price"></span>
+            <div class="input-group mb-3">
+                <div class="input-group-prepend">
+                    <span class="input-group-text">Price</span>
+                </div>
+                <input id="price" type="number" class="form-control" placeholder="Price">
+            </div>
+            <button id="create" type="button"  class="btn btn-primary">Create</button>
+        </div>
+    </div>
+</div>
+
+</body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/paginationjs/2.1.4/pagination.min.js"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/paginationjs/2.1.4/pagination.css" rel="stylesheet"/>
+<hr>
+<h1>Pagination</h1>
+<div id="wrapper">
+    <section>
+        <div class="data-container"></div>
+        <div id="demo"></div>
+    </section>
+</div>
+</html>
